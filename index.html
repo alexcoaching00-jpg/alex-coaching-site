@@ -120,6 +120,34 @@
   code{background:var(--ink2);color:var(--white2);padding:1px 5px;border-radius:5px;font-size:13px}
   .sql{white-space:pre-wrap;background:#0A0A0A;color:#666;padding:12px;border-radius:10px;font-size:11px;line-height:1.45;overflow:auto;margin-top:8px;font-family:ui-monospace,Menlo,monospace}
   details summary{cursor:pointer;font-size:13.5px;color:var(--red);font-weight:700}
+
+  /* photos */
+  .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .photo-item{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--ink2);border:1px solid var(--line)}
+  .photo-item img{width:100%;height:100%;object-fit:cover}
+  .photo-del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);border:none;color:#fff;border-radius:999px;width:22px;height:22px;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .photo-add{aspect-ratio:1;border-radius:12px;border:1px dashed var(--line);background:transparent;color:var(--grey2);font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s}
+  .photo-add:hover{border-color:var(--red)}
+  .photo-label{font-size:11px;color:var(--grey);margin-top:4px;text-align:center}
+  /* messages */
+  .msg-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:280px;overflow-y:auto}
+  .msg{max-width:80%;padding:9px 12px;border-radius:14px;font-size:14px;line-height:1.4}
+  .msg.coach{align-self:flex-end;background:var(--red);color:#fff;border-bottom-right-radius:4px}
+  .msg.client{align-self:flex-start;background:var(--ink2);color:var(--white2);border-bottom-left-radius:4px}
+  .msg .mt{font-size:10px;opacity:.6;margin-top:3px;text-align:right}
+  .msg-input{display:flex;gap:8px;align-items:flex-end}
+  .msg-input textarea{flex:1;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:14px;background:var(--ink2);color:var(--white);outline:none;font-family:'Inter';resize:none;min-height:42px;max-height:100px}
+  .msg-input textarea:focus{border-color:var(--red)}
+  /* objectif chiffré */
+  .obj-bar{background:var(--ink2);border-radius:999px;height:8px;margin:8px 0 4px;overflow:hidden}
+  .obj-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--red2),var(--red));transition:width .4s ease}
+  /* badge inactif */
+  .badge-warn{background:rgba(240,180,41,.15);color:#F0B429;border-radius:999px;font-size:11px;font-weight:700;padding:2px 8px;display:inline-block}
+  /* stat card clickable */
+  .stat{cursor:default}
+  /* onglet message */
+  .unread{display:inline-block;width:7px;height:7px;border-radius:999px;background:var(--red);margin-left:4px;vertical-align:middle}
+
 </style>
 </head>
 <body>
@@ -195,8 +223,8 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const val=id=>{const e=document.getElementById(id);return e?e.value:"";};
 const sel=()=>S.clients.find(c=>c.id===S.selectedId)||null;
 
-const rowToClient=r=>({id:r.id,nom:r.nom,objectif:r.objectif||"",formule:r.formule||FORMULES[0],niveau:r.niveau||NIVEAUX[0],notes:r.notes||"",clientEmail:r.client_email||"",dateDebut:r.date_debut||"",program:r.program||[],mesures:r.mesures||[],seances:r.seances||[]});
-const clientToRow=c=>({nom:c.nom,objectif:c.objectif||null,formule:c.formule||null,niveau:c.niveau||null,notes:c.notes||null,client_email:(c.clientEmail||"").trim().toLowerCase()||null,date_debut:c.dateDebut||null,program:c.program||[],mesures:c.mesures||[],seances:c.seances||[],updated_at:new Date().toISOString()});
+const rowToClient=r=>({id:r.id,nom:r.nom,objectif:r.objectif||"",formule:r.formule||FORMULES[0],niveau:r.niveau||NIVEAUX[0],notes:r.notes||"",clientEmail:r.client_email||"",dateDebut:r.date_debut||"",objectifPoids:r.objectif_poids||null,program:r.program||[],mesures:r.mesures||[],seances:r.seances||[],messages:r.messages||[],photos:r.photos||[]});
+const clientToRow=c=>({nom:c.nom,objectif:c.objectif||null,formule:c.formule||null,niveau:c.niveau||null,notes:c.notes||null,client_email:(c.clientEmail||"").trim().toLowerCase()||null,date_debut:c.dateDebut||null,objectif_poids:c.objectifPoids||null,program:c.program||[],mesures:c.mesures||[],seances:c.seances||[],messages:c.messages||[],photos:c.photos||[],updated_at:new Date().toISOString()});
 
 let toastT=null;
 function toast(msg){const t=document.getElementById("toast");if(!t)return;t.textContent=msg;t.style.display="block";clearTimeout(toastT);toastT=setTimeout(()=>t.style.display="none",1200);}
@@ -308,20 +336,33 @@ function render(){
 
 function dashboard(){
   const cs=S.clients;
-  const seances=cs.reduce((n,c)=>n+((c.seances||[]).filter(s=>s.fait).length),0);
+  const totalSeances=cs.reduce((n,c)=>n+((c.seances||[]).filter(s=>s.fait).length),0);
+  const totalMsgs=cs.reduce((n,c)=>n+((c.messages||[]).filter(m=>m.from==='client'&&!m.lu).length),0);
   const byF=FORMULES.map(f=>({f,n:cs.filter(c=>c.formule===f).length})).filter(x=>x.n>0);
   const email=S.session&&S.session.user?S.session.user.email:"";
+  // Clients inactifs = aucune séance depuis 14 jours
+  const now=new Date(), inactifs=cs.filter(c=>{
+    const ss=(c.seances||[]).filter(s=>s.fait);
+    if(!ss.length) return true;
+    const last=new Date(ss[ss.length-1].date||ss[ss.length-1]);
+    return (now-last)/(1000*60*60*24)>14;
+  });
   return `
     <div class="row-stats">
-      <div class="stat"><div class="v" style="color:var(--emerald)">${cs.length}</div><div class="l">Clients</div></div>
-      <div class="stat"><div class="v" style="color:var(--amber)">${seances}</div><div class="l">Séances validées</div></div>
+      <div class="stat"><div class="v">${cs.length}</div><div class="l">Clients</div></div>
+      <div class="stat"><div class="v">${totalSeances}</div><div class="l">Séances</div></div>
+      <div class="stat"><div class="v" style="color:${totalMsgs>0?'var(--red)':'var(--grey)'}">${totalMsgs}</div><div class="l">Messages</div></div>
     </div>
     ${byF.length?`<div class="tags">${byF.map(x=>`<span class="tag ${x.f==='Petit groupe'?'am':'em'}">${x.f} · ${x.n}</span>`).join("")}</div>`:""}
+    ${inactifs.length?`<div class="panel" style="margin-bottom:14px;border-color:rgba(240,180,41,.3)">
+      <div class="ph" style="color:#F0B429;font-size:14px">⚠ ${inactifs.length} client${inactifs.length>1?'s':''} inactif${inactifs.length>1?'s':''} (+14 jours)</div>
+      ${inactifs.map(c=>`<span class="badge-warn" style="margin-right:6px;margin-top:4px">${esc(c.nom)}</span>`).join("")}
+    </div>`:""}
     <div class="sec-head"><h2>Vos clients</h2><button class="link" data-act="add-open">+ Ajouter</button></div>
     ${cs.length?cs.map(clientRow).join(""):emptyClients()}
     <div class="sec-head" style="margin-top:20px"><h2>Compte</h2></div>
     <div class="panel">
-      <p class="muted" style="margin-bottom:12px">Connecté : <b>${esc(email)}</b>. Données synchronisées sur tous vos appareils.</p>
+      <p class="muted" style="margin-bottom:12px">Connecté : <b>${esc(email)}</b></p>
       <div class="col">
         <button class="btn g full" data-act="export">↓ Exporter une sauvegarde</button>
         <button class="btn g full" data-act="logout">Se déconnecter</button>
@@ -348,9 +389,9 @@ function emptyClients(){
 }
 function detail(c){
   if(!c)return"";
-  const tabs=[["infos","Infos"],["programme","Programme"],["progres","Progrès"],["seances","Séances"]];
+  const tabs=[["infos","Infos"],["programme","Programme"],["progres","Progrès"],["seances","Séances"],["messages","Messages"],["photos","Photos"]];
   const tabbar=tabs.map(([k,l])=>`<button data-act="dtab" data-dtab="${k}" class="${S.detailTab===k?'on':''}">${l}</button>`).join("");
-  let inner=S.detailTab==="infos"?infosTab(c):S.detailTab==="programme"?programme(c,true):S.detailTab==="progres"?progres(c,true):seancesTab(c,true);
+  let inner=S.detailTab==="infos"?infosTab(c):S.detailTab==="programme"?programme(c,true):S.detailTab==="progres"?progres(c,true):S.detailTab==="messages"?messagesTab(c,true):S.detailTab==="photos"?photosTab(c,true):seancesTab(c,true);
   return `<button class="back" data-act="back">‹ Clients</button>
     <div class="dhead"><div class="avatar" style="width:46px;height:46px;font-size:18px">${esc(c.nom.slice(0,1))}</div>
     <div><h2>${esc(c.nom)}</h2><div class="mini"><span class="tag ${c.formule==='Petit groupe'?'am':'em'}">${esc(c.formule)}</span><span class="tag ink">${esc(c.niveau)}</span></div></div></div>
@@ -371,6 +412,14 @@ function infosTab(c){
       <button class="btn p full" data-act="invite">Envoyer l'invitation par e-mail</button>
       <p class="muted" style="font-size:12.5px;margin-top:8px">Le client reçoit un lien pour se connecter et accéder uniquement à son espace (programme, progression, séances).</p>
     </div>
+    <div class="r2">
+      <label class="fld"><span>Poids actuel (kg)</span><input data-bind-num="objectifPoids" placeholder="Ex. 75" value="${c.objectifPoids||''}"></label>
+      <label class="fld" style="display:flex;flex-direction:column;justify-content:flex-end"><span>Objectif poids</span><input id="obj-poids-target" placeholder="Ex. 68" value=""></label>
+    </div>
+    ${(()=>{const ms=c.mesures||[];const cur=ms.length?ms[ms.length-1].poids:null;const start=ms.length?ms[0].poids:null;const target=c.objectifPoids;
+    if(!cur||!start||!target) return '';
+    const total=Math.abs(start-target);const done=Math.abs(start-cur);const pct=Math.min(100,total>0?Math.round(done/total*100):0);
+    return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--grey)"><span>Progression objectif poids</span><span>${pct}%</span></div><div class="obj-bar"><div class="obj-fill" style="width:${pct}%"></div></div><div style="font-size:11px;color:var(--grey2);display:flex;justify-content:space-between"><span>Départ : ${start} kg</span><span>Objectif : ${target} kg</span></div></div>`;})()}
     ${S.confirmDel
       ? `<div class="danger-box"><p>Supprimer <b>${esc(c.nom)}</b> et toutes ses données ? Action définitive.</p>
          <div class="r2"><button class="btn g" style="flex:1" data-act="del-cancel">Annuler</button>
@@ -426,7 +475,7 @@ function seancesTab(c,editable){
 function clientSpace(c){
   if(!c)return `<p class="muted" style="text-align:center;margin-top:40px">Sélectionnez un client en haut de l'écran.</p>`;
   const banner=`<div class="cbanner"><div class="lab">Votre objectif</div><div class="obj">${esc(c.objectif||"—")}</div></div>`;
-  let inner=S.clientTab==="programme"?programme(c,false):S.clientTab==="progres"?progres(c,true):seancesTab(c,true);
+  let inner=S.clientTab==="programme"?programme(c,false):S.clientTab==="progres"?progres(c,true):S.clientTab==="messages"?messagesTab(c,false):S.clientTab==="photos"?photosTab(c,false):seancesTab(c,true);
   return banner+inner;
 }
 function addModal(){
@@ -439,6 +488,42 @@ function addModal(){
     <label class="fld"><span>Niveau</span><select id="ac-niveau">${o(NIVEAUX)}</select></label></div>
     <div class="r2" style="margin-top:4px"><button class="btn g full" data-act="modal-close">Annuler</button>
     <button class="btn p full" data-act="modal-create">Créer le client</button></div></div></div>`;
+}
+
+
+/* ===== MESSAGES ===== */
+function messagesTab(c,isCoach){
+  const msgs=(c.messages||[]);
+  const rows=msgs.length
+    ? msgs.map(m=>`<div class="msg ${m.from==='coach'?'coach':'client'}">
+        ${esc(m.text)}
+        <div class="mt">${frDate(m.date.slice(0,10))} · ${m.date.slice(11,16)}</div>
+      </div>`).join("")
+    : `<p class="muted" style="text-align:center;padding:20px 0">Aucun message.</p>`;
+  const role=isCoach?'coach':'client';
+  return `<div class="msg-list" id="msg-list">${rows}</div>
+    <div class="msg-input">
+      <textarea id="msg-text" placeholder="Écrire un message…" rows="1"></textarea>
+      <button class="btn p" data-act="send-msg" data-role="${role}" style="padding:10px 14px;font-size:18px;flex-shrink:0">➤</button>
+    </div>`;
+}
+
+/* ===== PHOTOS BILAN ===== */
+function photosTab(c,editable){
+  const photos=(c.photos||[]);
+  const grid=photos.map((p,i)=>`
+    <div class="photo-item">
+      <img src="${p.url}" alt="Bilan ${i+1}" loading="lazy">
+      ${editable?`<button class="photo-del" data-act="del-photo" data-idx="${i}">×</button>`:""}
+      <div class="photo-label">${esc(p.label||frDate(p.date))}</div>
+    </div>`).join("");
+  const addBtn=editable?`
+    <label class="photo-add" title="Ajouter une photo">
+      <span>+</span>
+      <input type="file" accept="image/*" style="display:none" data-act="add-photo">
+    </label>`:"";
+  return `<div class="photo-grid">${grid}${addBtn}</div>
+    ${!photos.length&&!editable?`<p class="muted" style="text-align:center">Aucune photo pour l'instant.</p>`:""}`;
 }
 
 /* ===== actions async ===== */
@@ -545,6 +630,16 @@ document.addEventListener("click",e=>{
     case "add-se":{ if(!c) return; c.seances=c.seances||[]; c.seances.push({date:today(),fait:true,ressenti:val("se-ressenti"),note:val("se-note")}); c.seances.sort((x,y)=>y.date.localeCompare(x.date)); save(); render(); break; }
     case "toggle-se": if(c){ const i=+t.dataset.idx; c.seances[i].fait=!c.seances[i].fait; save(); render(); } break;
     case "del-se": if(c){ c.seances=(c.seances||[]).filter((_,i)=>i!==+t.dataset.idx); save(); render(); } break;
+    case "send-msg":{ if(!c) return;
+      const txt=(document.getElementById("msg-text").value||"").trim(); if(!txt) return;
+      const role=t.dataset.role||"coach";
+      c.messages=c.messages||[];
+      c.messages.push({from:role,text:txt,date:new Date().toISOString(),lu:role==="coach"});
+      save(); render();
+      // Scroll to bottom
+      setTimeout(()=>{const ml=document.getElementById("msg-list");if(ml)ml.scrollTop=ml.scrollHeight;},50);
+      break; }
+    case "del-photo": if(c){ c.photos=(c.photos||[]).filter((_,i)=>i!==+t.dataset.idx); save(); render(); } break;
     case "export":{
       const payload={app:"Alex Coaching",version:1,exportedAt:new Date().toISOString(),clients:S.clients};
       const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
@@ -558,6 +653,17 @@ document.addEventListener("input",e=>{
   const c=sel(); if(!c) return; c[el.dataset.bind]=el.value; save();
 });
 document.addEventListener("change",e=>{
+  const photoInput=e.target.closest('[data-act="add-photo"]');
+  if(photoInput && photoInput.files && photoInput.files[0]){
+    const file=photoInput.files[0]; const c=sel(); if(!c) return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      c.photos=c.photos||[];
+      c.photos.push({url:ev.target.result,date:new Date().toISOString().slice(0,10),label:""});
+      save(); render();
+    };
+    reader.readAsDataURL(file); return;
+  }
   const pick=e.target.closest('[data-act="pick-client"]');
   if(pick){ S.selectedId=pick.value; render(); return; }
   const b=e.target.closest("[data-bind]");
