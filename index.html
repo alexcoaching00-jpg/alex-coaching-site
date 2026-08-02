@@ -405,13 +405,18 @@
         <div class="contact-row"><span class="k">Zone</span><span class="v">Wattrelos / Wasquehal</span></div>
       </div>
       <form id="contactForm" class="reveal">
+        <input type="hidden" name="access_key" value="b540a7bd-9c43-430a-a21a-a2d32a7bd2fb" />
+        <input type="hidden" name="subject" value="Nouvelle demande — Alex Coaching" />
+        <input type="hidden" name="from_name" value="Site Alex Coaching" />
+        <input type="checkbox" name="botcheck" style="display:none" tabindex="-1" autocomplete="off" />
         <label for="name">Nom</label>
         <input id="name" name="name" type="text" required placeholder="Ton nom" />
         <label for="email">Email</label>
         <input id="email" name="email" type="email" required placeholder="ton@email.fr" />
         <label for="goal">Ton objectif</label>
-        <textarea id="goal" name="goal" required placeholder="Perte de poids, prise de muscle, remise en forme, préparation physique..."></textarea>
-        <button type="submit" class="btn btn-primary">Envoyer ma demande</button>
+        <textarea id="goal" name="message" required placeholder="Perte de poids, prise de muscle, remise en forme, préparation physique..."></textarea>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Envoyer ma demande</button>
+        <p id="formStatus" style="font-size:13px;font-weight:600;margin-top:4px"></p>
       </form>
     </div>
   </div>
@@ -445,14 +450,38 @@
   }, { threshold: .12 });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
-  document.getElementById('contactForm').addEventListener('submit', function(e){
+  const contactForm = document.getElementById('contactForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const formStatus = document.getElementById('formStatus');
+
+  contactForm.addEventListener('submit', async function(e){
     e.preventDefault();
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const goal = document.getElementById('goal').value;
-    const subject = encodeURIComponent('Demande de bilan gratuit — ' + name);
-    const body = encodeURIComponent('Nom: ' + name + '\nEmail: ' + email + '\n\nObjectif:\n' + goal);
-    window.location.href = 'mailto:alexcoaching00@gmail.com?subject=' + subject + '&body=' + body;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Envoi en cours...';
+    formStatus.textContent = '';
+
+    const formData = new FormData(contactForm);
+    try {
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: formData
+      });
+      const result = await res.json();
+      if (result.success) {
+        formStatus.style.color = '#8FD19E';
+        formStatus.textContent = "Message envoyé ! Je reviens vers toi rapidement.";
+        contactForm.reset();
+        submitBtn.textContent = 'Envoyer ma demande';
+      } else {
+        throw new Error(result.message || 'Erreur');
+      }
+    } catch (err) {
+      formStatus.style.color = '#E53935';
+      formStatus.textContent = "Un problème est survenu. Écris-moi directement à alexcoaching00@gmail.com.";
+      submitBtn.textContent = 'Envoyer ma demande';
+    }
+    submitBtn.disabled = false;
   });
 </script>
 
