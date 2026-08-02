@@ -182,6 +182,17 @@
   }
   .transfo-label.avant{background:var(--ink2); color:var(--white2); border:1px solid var(--line)}
   .transfo-label.apres{background:linear-gradient(180deg,var(--redbright),var(--red2)); color:var(--white)}
+  .transfo-stats{display:flex; align-items:center; justify-content:center; gap:24px; margin:36px 0}
+  .transfo-stats .num{font-family:'Bebas Neue'; font-size:56px; line-height:1}
+  .transfo-stats .num.from{color:var(--grey)}
+  .transfo-stats .num.to{color:var(--redbright)}
+  .transfo-stats .arrow{color:var(--grey2); font-size:24px}
+  .transfo-story{
+    max-width:640px; margin:0 auto; text-align:center;
+    color:var(--white2); font-size:16px; line-height:1.75;
+  }
+  .transfo-story strong{color:var(--white)}
+  .transfo-cta{display:flex; justify-content:center; margin-top:32px}
 
   /* -- zone -- */
   .zone-box{
@@ -377,6 +388,22 @@
         <span class="transfo-label apres">Après</span>
         <img src="after.jpg" alt="Après transformation" class="transfo-img" />
       </div>
+    </div>
+
+    <div class="transfo-stats reveal">
+      <span class="num from">102kg</span>
+      <span class="arrow">→</span>
+      <span class="num to">68kg</span>
+    </div>
+
+    <div class="transfo-story reveal">
+      <p>Ancien obèse à <strong>102kg</strong>, j'ai décidé de reprendre ma vie en main. Je manquais de confiance en moi, je me sentais mal dans mon corps. J'ai choisi de changer de vie pour prouver qu'avec un mental d'acier et une motivation hors du commun, tout est possible.</p>
+      <p style="margin-top:16px">Aujourd'hui je pèse <strong>68kg</strong> — la preuve que ça marche. Et l'objectif n'est pas terminé : ce n'est qu'une étape.</p>
+      <p style="margin-top:16px">Toi aussi tu veux des résultats ? <strong>Contacte-moi.</strong></p>
+    </div>
+
+    <div class="transfo-cta reveal">
+      <a href="#contact" class="btn btn-primary">Contacte-moi en privé</a>
     </div>
   </div>
 </section>
