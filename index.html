@@ -126,8 +126,9 @@
   .section-head p{color:var(--white2); margin-top:14px; font-size:16px}
 
   /* -- offres -- */
-  .offres-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px}
-  @media (max-width:900px){ .offres-grid{grid-template-columns:1fr} }
+  .offres-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:20px}
+  @media (max-width:900px){ .offres-grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:640px){ .offres-grid{grid-template-columns:1fr} }
   .offre-card{
     background:var(--card); border:1px solid var(--line); border-radius:20px;
     padding:32px 26px; transition:transform .2s, box-shadow .2s, border-color .2s;
@@ -296,7 +297,7 @@
 <section id="offres">
   <div class="wrap">
     <div class="section-head reveal">
-      <h2>Trois façons de s'entraîner</h2>
+      <h2>Quatre façons de s'entraîner</h2>
       <p>Même exigence, même suivi personnalisé — à toi de choisir le format qui te motive.</p>
     </div>
     <div class="offres-grid">
@@ -317,6 +318,12 @@
         <h3>Petit groupe</h3>
         <p>3 à 5 personnes maximum, jamais plus. L'émulation du collectif, sans perdre l'attention individuelle sur ta technique et tes objectifs.</p>
         <div class="foot">3 à 5 personnes</div>
+      </div>
+      <div class="offre-card reveal">
+        <div class="offre-num">FORMULE 04</div>
+        <h3>En ligne</h3>
+        <p>Où que tu sois en France. Programme personnalisé, ajusté chaque semaine, suivi par message et appel selon tes progrès et tes retours.</p>
+        <div class="foot">Partout en France</div>
       </div>
     </div>
   </div>
@@ -447,6 +454,12 @@
         <h3>22€<span style="font-family:'Inter';font-size:14px;font-weight:600;color:var(--grey)"> / pers. / séance</span></h3>
         <p>Pack 10 séances : <strong style="color:var(--white)">190€</strong>/pers. (-10%)</p>
         <div class="foot">3 à 5 personnes</div>
+      </div>
+      <div class="offre-card reveal">
+        <div class="offre-num">EN LIGNE</div>
+        <h3>79€<span style="font-family:'Inter';font-size:14px;font-weight:600;color:var(--grey)"> / mois</span></h3>
+        <p>Programme + suivi hebdomadaire</p>
+        <div class="foot">Partout en France</div>
       </div>
     </div>
     <div style="text-align:center;margin-top:36px">
